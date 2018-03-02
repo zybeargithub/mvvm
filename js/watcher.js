@@ -1,3 +1,10 @@
+/**
+ *
+ * @param vm
+ * @param expOrFn
+ * @param cb
+ * @constructor
+ */
 function Watcher(vm, expOrFn, cb) {
     this.cb = cb;
     this.vm = vm;

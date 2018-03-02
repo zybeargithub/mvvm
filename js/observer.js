@@ -1,3 +1,7 @@
+/**
+ * 劫持监听所有属性
+ * @param data
+ */
 function Observer(data) {
     this.data = data;
     this.walk(data);

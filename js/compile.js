@@ -10,7 +10,18 @@ function Compile(el, vm) {
 }
 
 Compile.prototype = {
+
+  /**
+   * 获取并创建虚拟 DOM
+   * STEP:
+   * 1、创建虚拟 DOM
+   * 2、将 el 中所有的节点拷贝到 虚拟 DOM 中
+   *
+   * @param el
+   * @returns {DocumentFragment}
+   */
     node2Fragment: function(el) {
+      // 虚拟DOM实现的关键
         var fragment = document.createDocumentFragment(),
             child;
 
