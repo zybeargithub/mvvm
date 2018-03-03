@@ -1,8 +1,19 @@
+/**
+ * compile主要做的事情是
+ * 1、解析模板指令，将模板中的变量替换成数据，
+ * 2、初始化渲染页面视图，并将每个指令对应的节点绑定更新函数
+ * 3、添加监听数据的订阅者，一旦数据有变动，收到通知，更新视图
+ *
+ * @param el
+ * @param vm
+ * @constructor
+ */
 function Compile(el, vm) {
     this.$vm = vm;
     this.$el = this.isElementNode(el) ? el : document.querySelector(el);
 
     if (this.$el) {
+        // 获取虚拟DOM，并将模板内的所以节点加入到虚拟DOM中
         this.$fragment = this.node2Fragment(this.$el);
         this.init();
         this.$el.appendChild(this.$fragment);
@@ -41,14 +52,16 @@ Compile.prototype = {
         var childNodes = el.childNodes,
             me = this;
 
+        // 遍历虚拟 节点
         [].slice.call(childNodes).forEach(function(node) {
             var text = node.textContent;
             var reg = /\{\{(.*)\}\}/;
 
             if (me.isElementNode(node)) {
                 me.compile(node);
-
-            } else if (me.isTextNode(node) && reg.test(text)) {
+            }
+            // 文本
+            else if (me.isTextNode(node) && reg.test(text)) {
                 me.compileText(node, RegExp.$1);
             }
 
@@ -62,19 +75,22 @@ Compile.prototype = {
         var nodeAttrs = node.attributes,
             me = this;
 
+        // 遍历node节点中所有 属性
         [].slice.call(nodeAttrs).forEach(function(attr) {
             var attrName = attr.name;
+            // 是否是‘-v’属性
             if (me.isDirective(attrName)) {
-                var exp = attr.value;
-                var dir = attrName.substring(2);
+                var exp = attr.value;// 模型对象
+                var dir = attrName.substring(2);// 脱掉 'v-' 得到 mode
                 // 事件指令
                 if (me.isEventDirective(dir)) {
                     compileUtil.eventHandler(node, me.$vm, exp, dir);
                     // 普通指令
                 } else {
-                    compileUtil[dir] && compileUtil[dir](node, me.$vm, exp);
+                    compileUtil[dir] && compileUtil[dir](node, me.$vm, exp); // 执行 Mode 方法
                 }
 
+                // 再删除 'v-model' 的标签
                 node.removeAttribute(attrName);
             }
         });
@@ -84,6 +100,11 @@ Compile.prototype = {
         compileUtil.text(node, this.$vm, exp);
     },
 
+  /**
+   * 是否 v 字开头
+   * @param attr
+   * @returns {boolean}
+   */
     isDirective: function(attr) {
         return attr.indexOf('v-') == 0;
     },
@@ -103,19 +124,39 @@ Compile.prototype = {
 
 // 指令处理集合
 var compileUtil = {
+  /**
+   * {{getHelloWord}} 的调用
+   * @param node
+   * @param vm
+   * @param exp
+   */
     text: function(node, vm, exp) {
         this.bind(node, vm, exp, 'text');
     },
 
+  /**
+   * v-html 的调用
+   * @param node
+   * @param vm
+   * @param exp
+   */
     html: function(node, vm, exp) {
         this.bind(node, vm, exp, 'html');
     },
 
+  /**
+   * v-model 的调用
+   * @param node
+   * @param vm
+   * @param exp
+   */
     model: function(node, vm, exp) {
+      // 更新视图
         this.bind(node, vm, exp, 'model');
 
         var me = this,
             val = this._getVMVal(vm, exp);
+        // 监听input事件
         node.addEventListener('input', function(e) {
             var newValue = e.target.value;
             if (val === newValue) {
@@ -131,12 +172,24 @@ var compileUtil = {
         this.bind(node, vm, exp, 'class');
     },
 
+  /**
+   *  添加 watcher 监听
+   * @param node
+   * @param vm
+   * @param exp
+   * @param dir
+   */
     bind: function(node, vm, exp, dir) {
         var updaterFn = updater[dir + 'Updater'];
 
+        // 获取 model 的值, 并给node复制
+        // 完成从 mode -> view 的过程
         updaterFn && updaterFn(node, this._getVMVal(vm, exp));
 
-        new Watcher(vm, exp, function(value, oldValue) {
+      /**
+       * 实例化 Watcher 用于检测属性变化
+       */
+       new Watcher(vm, exp, function(value, oldValue) {
             updaterFn && updaterFn(node, value, oldValue);
         });
     },
@@ -151,11 +204,18 @@ var compileUtil = {
         }
     },
 
+  /**
+   * 获取 VM 的值 (getter方式)
+   * @param vm
+   * @param exp
+   * @returns {*}
+   * @private
+   */
     _getVMVal: function(vm, exp) {
         var val = vm;
         exp = exp.split('.');
         exp.forEach(function(k) {
-            val = val[k];
+            val = val[k];// 获取 vm 对应字段的值
         });
         return val;
     },
@@ -174,8 +234,16 @@ var compileUtil = {
     }
 };
 
-
+/**
+ * 更新 DOM 的值
+ * @type {{textUpdater: updater.textUpdater, htmlUpdater: updater.htmlUpdater, classUpdater: updater.classUpdater, modelUpdater: updater.modelUpdater}}
+ */
 var updater = {
+  /**
+   * 更新文本视图
+   * @param node
+   * @param value
+   */
     textUpdater: function(node, value) {
         node.textContent = typeof value == 'undefined' ? '' : value;
     },
@@ -193,6 +261,15 @@ var updater = {
         node.className = className + space + value;
     },
 
+  /**
+   * 给值环节：
+   *
+   * 给 原始DOM赋 值
+   * module updater
+   * @param node
+   * @param value
+   * @param oldValue
+   */
     modelUpdater: function(node, value, oldValue) {
         node.value = typeof value == 'undefined' ? '' : value;
     }
