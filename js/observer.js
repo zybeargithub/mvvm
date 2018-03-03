@@ -35,6 +35,12 @@ Observer.prototype = {
                 if (newVal === val) {
                     return;
                 }
+
+                /**
+                 * 持有闭包变量 val
+                 * 在 get 的时候 还是返回该 val
+                 * 所以无需全局缓存
+                 */
                 val = newVal;
                 // 新的值是object的话，进行监听
                 childObj = observe(newVal);
@@ -62,6 +68,10 @@ function Dep() {
 }
 
 Dep.prototype = {
+  /**
+   * 添加一个 watcher 实例
+   * @param sub
+   */
     addSub: function(sub) {
         this.subs.push(sub);
     },
@@ -84,4 +94,5 @@ Dep.prototype = {
     }
 };
 
+// 缓存 watcher 对象
 Dep.target = null;

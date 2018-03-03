@@ -31,6 +31,13 @@ MVVM.prototype = {
         new Watcher(this, key, cb);
     },
 
+  /**
+   * 通过 VM 访问 model 数据源
+   * @param key
+   * @param setter
+   * @param getter
+   * @private
+   */
     _proxyData: function(key, setter, getter) {
         var me = this;
         setter = setter || 

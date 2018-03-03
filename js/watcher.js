@@ -24,12 +24,19 @@ Watcher.prototype = {
     update: function() {
         this.run();
     },
-    run: function() {
+
+  /**
+   * 赋值并更新视图
+   * 通知complies来显示到DOM上
+   */
+  run: function() {
+        // 获取最新值
         var value = this.get();
         var oldVal = this.value;
         if (value !== oldVal) {
             this.value = value;
-            this.cb.call(this.vm, value, oldVal);
+            // 调用 compile 的钩子函数来刷新视图
+            this.cb.call(this.vm, value, oldVal);// 调用钩子函数
         }
     },
     addDep: function(dep) {
@@ -48,7 +55,7 @@ Watcher.prototype = {
         // 触发了addDep(), 在整个forEach过程，当前wacher都会加入到每个父级过程属性的dep
         // 例如：当前watcher的是'child.child.name', 那么child, child.child, child.child.name这三个属性的dep都会加入当前watcher
         if (!this.depIds.hasOwnProperty(dep.id)) {
-            dep.addSub(this);
+            dep.addSub(this);// 将当前 watcher 实例加入到 Dep 数组中
             this.depIds[dep.id] = dep;
         }
     },
@@ -67,7 +74,7 @@ Watcher.prototype = {
         return function(obj) {
             for (var i = 0, len = exps.length; i < len; i++) {
                 if (!obj) return;
-                obj = obj[exps[i]];
+                obj = obj[exps[i]]; // 通过 vm 来获取最新的值
             }
             return obj;
         }

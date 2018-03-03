@@ -156,7 +156,7 @@ var compileUtil = {
 
         var me = this,
             val = this._getVMVal(vm, exp);
-        // 监听input事件
+        // 监听input事件，并执行 m->v 的过程
         node.addEventListener('input', function(e) {
             var newValue = e.target.value;
             if (val === newValue) {
